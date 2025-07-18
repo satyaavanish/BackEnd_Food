@@ -1,22 +1,27 @@
+import dotenv from "dotenv";
+dotenv.config(); // ⬅️ Load env variables first
+
 import express from 'express';
 import cors from 'cors';
 import axios from 'axios';
-import dotenv from "dotenv";
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-
- app.use(cors({
+// ✅ CORS setup for Vercel frontend
+app.use(cors({
   origin: "https://front-end-food-omega.vercel.app",
   methods: ["GET", "POST", "OPTIONS"]
 }));
 
 app.use(express.json());
 
-dotenv.config();
+// ✅ Root route for Render health check
+app.get("/", (req, res) => {
+  res.send("Backend is running!");
+});
 
-const API_KEY = process.env.USDA_API_KEY;
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
+// ✅ Weather API using OpenWeatherMap
 app.get("/api/weather", async (req, res) => {
   const { lat, lng } = req.query;
 
@@ -41,7 +46,7 @@ app.get("/api/weather", async (req, res) => {
   }
 });
 
-// 🔍 Nearby Restaurants using Google Places API
+// ✅ Nearby Restaurants using Google Places API
 app.get("/api/places", async (req, res) => {
   const { lat, lng, keyword = "" } = req.query;
   console.log("✅ Called /api/places with:", lat, lng, keyword);
@@ -50,7 +55,7 @@ app.get("/api/places", async (req, res) => {
     return res.status(400).json({ error: "Latitude and longitude are required" });
   }
 
-  if (!GOOGLE_API_KEY) {
+  if (!process.env.GOOGLE_API_KEY) {
     console.error("Google API key is missing");
     return res.status(500).json({ error: "Server configuration error" });
   }
@@ -64,7 +69,7 @@ app.get("/api/places", async (req, res) => {
         keyword,
         type: "restaurant",
         rankby: "distance",
-        key: GOOGLE_API_KEY,
+        key: process.env.GOOGLE_API_KEY,
       },
     });
 
@@ -85,7 +90,7 @@ app.get("/api/places", async (req, res) => {
   }
 });
 
-// Nutrition detection via USDA API
+// ✅ Nutrition detection via USDA API
 app.post('/detect', async (req, res) => {
   const { items } = req.body;
   const item = items?.[0];
@@ -99,7 +104,7 @@ app.post('/detect', async (req, res) => {
     const searchRes = await axios.get('https://api.nal.usda.gov/fdc/v1/foods/search', {
       params: {
         query: item,
-        api_key: API_KEY
+        api_key: process.env.USDA_API_KEY
       }
     });
 
@@ -110,7 +115,7 @@ app.post('/detect', async (req, res) => {
 
     const fdcId = firstFood.fdcId;
     const detailsRes = await axios.get(`https://api.nal.usda.gov/fdc/v1/food/${fdcId}`, {
-      params: { api_key: API_KEY }
+      params: { api_key: process.env.USDA_API_KEY }
     });
 
     const nutrients = detailsRes.data.foodNutrients || [];
@@ -156,6 +161,7 @@ app.post('/detect', async (req, res) => {
   }
 });
 
- app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// ✅ Start server (important for Render)
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });
