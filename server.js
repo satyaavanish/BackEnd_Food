@@ -187,21 +187,20 @@ app.get("/", (req, res) => {
   res.send("Backend is running!");
 });
 
-// Weather API
 app.get("/api/weather", async (req, res) => {
   const { lat, lng } = req.query;
   if (!lat || !lng) return res.status(400).json({ error: "Missing latitude or longitude" });
+
   try {
     const response = await axios.get("https://api.openweathermap.org/data/2.5/weather", {
       params: { lat, lon: lng, appid: process.env.OPENWEATHER_API_KEY, units: "metric" }
     });
     res.json(response.data);
   } catch (err) {
-    res.status(500).json({ error: "Weather fetch failed" });
+    res.status(500).json({ error: "Weather fetch failed", details: err.response?.data || err.message });
   }
 });
 
-// Nearby Restaurants
 app.get("/api/places", async (req, res) => {
   const { lat, lng, keyword = "" } = req.query;
   if (!lat || !lng) return res.status(400).json({ error: "Latitude and longitude are required" });
@@ -230,7 +229,6 @@ app.get("/api/places", async (req, res) => {
   }
 });
 
-// Nutrition detection
 app.post('/detect', async (req, res) => {
   const { items } = req.body;
   const item = items?.[0];
@@ -268,19 +266,14 @@ app.post('/detect', async (req, res) => {
 
     res.json({ [item]: nutrition });
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch nutrition data" });
+    res.status(500).json({ error: "Failed to fetch nutrition data", details: err.response?.data || err.message });
   }
 });
 
-// ✅ GNews API proxy
 app.get("/api/news", async (req, res) => {
   try {
     const response = await axios.get("https://gnews.io/api/v4/search", {
-      params: {
-        q: "food",
-        lang: "en",
-        token: process.env.GNEWS_API_KEY
-      }
+      params: { q: "food", lang: "en", token: process.env.GNEWS_API_KEY }
     });
     res.json(response.data);
   } catch (err) {
