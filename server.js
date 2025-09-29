@@ -273,7 +273,7 @@ app.post('/detect', async (req, res) => {
 app.get("/api/news", async (req, res) => {
   try {
     const response = await axios.get("https://gnews.io/api/v4/search", {
-      params: { q: "food", lang: "en", token: process.env.REACT_APP_GNEWS_API_KEY}
+      params: { q: "food", lang: "en", token: process.env.GNEWS_API_KEY}
     });
     res.json(response.data);
   } catch (err) {
