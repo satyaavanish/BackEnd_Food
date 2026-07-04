@@ -65,33 +65,39 @@ app.get("/api/places", async (req, res) => {
 
   try {
     const query = `
-[out:json];
+[out:json][timeout:25];
 (
   node["amenity"="restaurant"](around:3000,${lat},${lng});
   way["amenity"="restaurant"](around:3000,${lat},${lng});
   relation["amenity"="restaurant"](around:3000,${lat},${lng});
 );
-out center tags;
+out body;
+>;
+out skel qt;
 `;
 
-    const response = await axios.get(
-  "https://overpass-api.de/api/interpreter",
-  {
-    params: {
-      data: query,
-    },
-  }
-);
+    const response = await axios.post(
+      "https://overpass-api.de/api/interpreter",
+      query,
+      {
+        headers: {
+          "Content-Type": "text/plain",
+          "Accept": "application/json"
+        }
+      }
+    );
 
-    const results = response.data.elements.map((place) => ({
-      name: place.tags?.name || "Restaurant",
-      vicinity:
-        place.tags?.["addr:street"] ||
-        place.tags?.["addr:city"] ||
-        place.tags?.["addr:suburb"] ||
-        "Address unavailable",
-      rating: "N/A",
-    }));
+    const results = response.data.elements
+      .filter(place => place.tags)
+      .map(place => ({
+        name: place.tags.name || "Restaurant",
+        vicinity:
+          place.tags["addr:street"] ||
+          place.tags["addr:city"] ||
+          place.tags["addr:suburb"] ||
+          "Address unavailable",
+        rating: "N/A"
+      }));
 
     res.json({ results });
 
@@ -99,7 +105,7 @@ out center tags;
     console.error(err.response?.data || err.message);
 
     res.status(500).json({
-      error: "Failed to fetch nearby restaurants",
+      error: err.response?.data || err.message
     });
   }
 });
