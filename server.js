@@ -74,15 +74,14 @@ app.get("/api/places", async (req, res) => {
 out center tags;
 `;
 
-    const response = await axios.post(
-      "https://overpass-api.de/api/interpreter",
-      query,
-      {
-        headers: {
-          "Content-Type": "text/plain",
-        },
-      }
-    );
+    const response = await axios.get(
+  "https://overpass-api.de/api/interpreter",
+  {
+    params: {
+      data: query,
+    },
+  }
+);
 
     const results = response.data.elements.map((place) => ({
       name: place.tags?.name || "Restaurant",
