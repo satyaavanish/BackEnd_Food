@@ -1,5 +1,6 @@
 # 🍽️ SnapDetectEat — AI-Powered Food Detection & Nutrition Platform
 Link-https://front-end-food-omega.vercel.app/
+
 A full-stack web application that identifies food from images, breaks down nutritional content, surfaces nearby restaurants, and delivers real-time food news — all in one place.
 
 ---
