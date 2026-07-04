@@ -1,5 +1,5 @@
 # 🍽️ SnapDetectEat — AI-Powered Food Detection & Nutrition Platform
-
+Link-https://front-end-food-omega.vercel.app/
 A full-stack web application that identifies food from images, breaks down nutritional content, surfaces nearby restaurants, and delivers real-time food news — all in one place.
 
 ---
@@ -101,7 +101,6 @@ GEMINI_API_KEY=your_gemini_key
 PORT=5000
 ```
 
-> ⚠️ Never commit your `.env` file. Add it to `.gitignore`.
 
 ### 3. Install & Run the Backend
 
