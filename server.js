@@ -114,7 +114,10 @@ app.post("/api/gemini", async (req, res) => {
       { contents: [{ parts }] },
       {
         headers: { "Content-Type": "application/json" },
-        timeout: 15000,
+        // Longer prompts (e.g. full step-by-step recipes) can take Gemini
+        // noticeably longer to generate than short dish-name lists.
+        // 15s was cutting those off mid-generation.
+        timeout: 30000,
       }
     );
 
