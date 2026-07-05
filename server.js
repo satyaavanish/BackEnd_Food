@@ -78,6 +78,62 @@ app.get("/api/geocode", async (req, res) => {
   }
 });
 
+// ✅ Generic Gemini proxy. Frontend sends a fully-built prompt (and,
+// optionally, image data), backend attaches the key and calls Gemini.
+// This keeps GEMINI_API_KEY out of the React bundle entirely.
+app.post("/api/gemini", async (req, res) => {
+  const { prompt, inlineImage } = req.body;
+
+  if (!prompt || !prompt.trim()) {
+    return res.status(400).json({ error: "Missing 'prompt' in request body" });
+  }
+
+  if (!process.env.GEMINI_API_KEY) {
+    console.error("Gemini API key is missing");
+    return res.status(500).json({ error: "Server configuration error" });
+  }
+
+  // Build the same "contents" shape Gemini expects. If the caller also
+  // sends an image (base64 + mimeType), include it alongside the prompt
+  // — this covers both the text-only summary use case and the
+  // dish-detection-from-photo use case.
+  const parts = [];
+  if (inlineImage?.data && inlineImage?.mimeType) {
+    parts.push({
+      inlineData: {
+        mimeType: inlineImage.mimeType,
+        data: inlineImage.data,
+      },
+    });
+  }
+  parts.push({ text: prompt });
+
+  try {
+    const response = await axios.post(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      { contents: [{ parts }] },
+      {
+        headers: { "Content-Type": "application/json" },
+        timeout: 15000,
+      }
+    );
+
+    const text = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!text) {
+      return res.status(502).json({ error: "Empty response from Gemini" });
+    }
+
+    return res.json({ text });
+  } catch (err) {
+    console.error("Gemini proxy error:", err.response?.data || err.message);
+    return res.status(500).json({
+      error: "Gemini request failed",
+      details: err.response?.data || err.message,
+    });
+  }
+});
+
 app.get("/api/places", async (req, res) => {
   const { lat, lng } = req.query;
 
