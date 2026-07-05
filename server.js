@@ -224,13 +224,15 @@ app.get("/api/places", async (req, res) => {
     );
 
     const results = response.data.features.map((place) => ({
-      name: place.properties.name || "Restaurant",
-      vicinity:
-        place.properties.address_line2 ||
-        place.properties.address_line1 ||
-        "Address unavailable",
-      rating: "N/A",
-    }));
+  name: place.properties.name || "Restaurant",
+  vicinity:
+    place.properties.address_line2 ||
+    place.properties.address_line1 ||
+    "Address unavailable",
+  rating: "N/A",
+  lat: place.properties.lat,
+  lng: place.properties.lon,
+}));
 
     res.json({ results });
 
