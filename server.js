@@ -202,30 +202,45 @@ app.get("/api/weather", async (req, res) => {
 });
 
 app.get("/api/places", async (req, res) => {
-  const { lat, lng, keyword = "" } = req.query;
-  if (!lat || !lng) return res.status(400).json({ error: "Latitude and longitude are required" });
+  const { lat, lng } = req.query;
+
+  if (!lat || !lng) {
+    return res.status(400).json({
+      error: "Latitude and longitude are required",
+    });
+  }
 
   try {
-    const response = await axios.get(`https://maps.googleapis.com/maps/api/place/nearbysearch/json`, {
-      params: {
-        location: `${lat},${lng}`,
-        keyword,
-        type: "restaurant",
-        rankby: "distance",
-        key: process.env.GOOGLE_API_KEY,
-      },
-    });
+    const response = await axios.get(
+      "https://api.geoapify.com/v2/places",
+      {
+        params: {
+          categories: "catering.restaurant",
+          filter: `circle:${lng},${lat},3000`,
+          limit: 20,
+          apiKey: process.env.GEOAPIFY_API_KEY,
+        },
+      }
+    );
 
-    const results = response.data.results.map(place => ({
-      name: place.name,
-      vicinity: place.vicinity,
-      place_id: place.place_id,
-      rating: place.rating || "N/A",
+    const results = response.data.features.map((place) => ({
+      name: place.properties.name || "Restaurant",
+      vicinity:
+        place.properties.address_line2 ||
+        place.properties.address_line1 ||
+        "Address unavailable",
+      rating: "N/A",
     }));
 
     res.json({ results });
+
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch nearby places", details: err.response?.data || err.message });
+    console.error(err.response?.data || err.message);
+
+    res.status(500).json({
+      error: "Failed to fetch nearby restaurants",
+      details: err.response?.data || err.message,
+    });
   }
 });
 
